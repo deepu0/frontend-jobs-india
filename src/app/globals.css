@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-brand-primary: #ff0066; /* Hot pink like RemoteOK */
+  --color-brand-secondary: #ff7e5f;
+  
+  --color-slate-950: #020617;
+  --color-slate-900: #0f172a;
+  
+  --font-inter: 'Inter', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --border: #e2e8f0;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+  }
+
+  .dark {
+    --background: #000000;
+    --foreground: #ffffff;
+    --card: #0f172a;
+    --card-foreground: #ffffff;
+    --border: #1e293b;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-inter);
+    @apply antialiased font-medium;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-black tracking-tighter uppercase italic;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .text-giant {
+    @apply text-6xl md:text-9xl font-black tracking-tighter leading-[0.8] tracking-[-0.05em];
+  }
+
+  .glass {
+    @apply bg-white/80 dark:bg-black/80 backdrop-blur-3xl border border-white/20 dark:border-white/5;
+  }
+  
+  .glass-card {
+    @apply bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-2xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-linear-to-r from-brand-primary to-[#ffcc00];
+  }
 }
