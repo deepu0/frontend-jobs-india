@@ -8,8 +8,15 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     loading: boolean;
+    isAdmin: boolean;
     signOut: () => Promise<void>;
 }
+
+// Admin emails - add your email here to get admin access
+const ADMIN_EMAILS = [
+    'sdeepaksharma834@gmail.com',  // Deepak's email
+    'admin@frontendjobs.in',       // Default admin
+];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -17,6 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Check if current user is admin
+    const isAdmin = user ? ADMIN_EMAILS.includes(user.email || '') : false;
 
     useEffect(() => {
         // Check active sessions and sets the user
@@ -41,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, loading, signOut }}>
+        <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>
             {children}
         </AuthContext.Provider>
     );

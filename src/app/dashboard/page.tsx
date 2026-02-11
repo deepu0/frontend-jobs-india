@@ -7,19 +7,17 @@ import { useRouter } from 'next/navigation';
 import { Job, Company } from '@/types/job';
 import { 
     Briefcase, Building2, Plus, Loader2, Trash2, Edit2, 
-    ExternalLink, Eye, TrendingUp, Calendar, MapPin, 
-    DollarSign, LogOut 
+    ExternalLink, Eye, TrendingUp, Calendar, LogOut, Shield
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface JobWithCompany extends Job {
     company: Company;
 }
 
 export default function DashboardPage() {
-    const { user, signOut, loading: authLoading } = useAuth();
+    const { user, signOut, loading: authLoading, isAdmin } = useAuth();
     const router = useRouter();
     const [jobs, setJobs] = useState<JobWithCompany[]>([]);
     const [company, setCompany] = useState<Company | null>(null);
@@ -34,32 +32,34 @@ export default function DashboardPage() {
         if (user) {
             fetchUserData();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, authLoading]);
 
     async function fetchUserData() {
         setLoading(true);
         try {
-            // Fetch user's jobs with company info
-            const { data: jobsData, error: jobsError } = await supabase
-                .from('jobs')
-                .select('*, company:companies(*)')
-                .eq('user_id', user?.id)
-                .order('created_at', { ascending: false });
+            // For admin: fetch ALL jobs, for regular user: fetch only their jobs
+            const jobsQuery = isAdmin
+                ? supabase.from('jobs').select('*, company:companies(*)').order('created_at', { ascending: false })
+                : supabase.from('jobs').select('*, company:companies(*)').eq('user_id', user?.id).order('created_at', { ascending: false });
+
+            const { data: jobsData, error: jobsError } = await jobsQuery;
 
             if (jobsError) throw jobsError;
             setJobs(jobsData as unknown as JobWithCompany[]);
 
-            // Fetch user's company
-            const { data: companyData, error: companyError } = await supabase
-                .from('companies')
-                .select('*')
-                .eq('user_id', user?.id)
-                .maybeSingle();
+            // Fetch user's company (or first company for admin)
+            const companyQuery = isAdmin
+                ? supabase.from('companies').select('*').limit(1).maybeSingle()
+                : supabase.from('companies').select('*').eq('user_id', user?.id).maybeSingle();
+
+            const { data: companyData, error: companyError } = await companyQuery;
 
             if (companyError && companyError.code !== 'PGRST116') throw companyError;
             setCompany(companyData);
-        } catch (err: any) {
-            console.error('Error fetching user data:', err);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            console.error('Error fetching user data:', errorMessage);
         } finally {
             setLoading(false);
         }
@@ -67,20 +67,22 @@ export default function DashboardPage() {
 
     async function handleDeleteJob(jobId: string) {
         if (!confirm('Are you sure you want to delete this job?')) return;
-        
+
         setDeleteLoading(jobId);
         try {
-            const { error } = await supabase
-                .from('jobs')
-                .delete()
-                .eq('id', jobId)
-                .eq('user_id', user?.id);
+            // Admin can delete any job, regular user can only delete their own
+            const deleteQuery = isAdmin
+                ? supabase.from('jobs').delete().eq('id', jobId)
+                : supabase.from('jobs').delete().eq('id', jobId).eq('user_id', user?.id);
+
+            const { error } = await deleteQuery;
 
             if (error) throw error;
-            
+
             setJobs(jobs.filter(job => job.id !== jobId));
-        } catch (err: any) {
-            alert('Failed to delete job: ' + err.message);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to delete job';
+            alert('Failed to delete job: ' + errorMessage);
         } finally {
             setDeleteLoading(null);
         }
@@ -100,7 +102,7 @@ export default function DashboardPage() {
     }
 
     const stats = [
-        { label: 'Active Jobs', value: jobs.length, icon: Briefcase },
+        { label: isAdmin ? 'Total Jobs' : 'Active Jobs', value: jobs.length, icon: Briefcase },
         { label: 'Total Views', value: '0', icon: Eye },
         { label: 'Applications', value: '0', icon: TrendingUp },
         { label: 'Days Active', value: company?.created_at ? Math.ceil((Date.now() - new Date(company.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0, icon: Calendar },
@@ -117,7 +119,15 @@ export default function DashboardPage() {
                 >
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-black tracking-tight">Dashboard</h1>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-3xl font-black tracking-tight">Dashboard</h1>
+                                {isAdmin && (
+                                    <span className="px-3 py-1 bg-purple-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                                        <Shield className="w-3 h-3" />
+                                        ADMIN
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-muted-foreground mt-1">Welcome back, {user?.email}</p>
                         </div>
                         <div className="flex gap-3">
@@ -167,7 +177,12 @@ export default function DashboardPage() {
                             <div className="p-6 border-b border-border">
                                 <h2 className="text-xl font-bold flex items-center gap-2">
                                     <Briefcase className="w-5 h-5 text-brand-primary" />
-                                    My Job Listings
+                                    {isAdmin ? 'All Job Listings' : 'My Job Listings'}
+                                    {isAdmin && (
+                                        <span className="ml-2 text-sm font-normal text-muted-foreground">
+                                            (Admin View)
+                                        </span>
+                                    )}
                                 </h2>
                             </div>
 

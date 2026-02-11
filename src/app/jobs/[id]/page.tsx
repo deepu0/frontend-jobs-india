@@ -4,12 +4,12 @@ import { useParams } from 'next/navigation';
 import { useJob } from '@/hooks/useJobs';
 import { Badge } from '@/components/ui/Badge';
 import { JobCard } from '@/components/jobs/JobCard';
+import { Job } from '@/types/job';
 import {
     MapPin, Clock, DollarSign, ExternalLink, ShieldCheck,
     ArrowLeft, Share2, Bookmark, Globe, Twitter, Github, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 
 export default function JobDetailPage() {
     const { id } = useParams();
@@ -33,7 +33,7 @@ export default function JobDetailPage() {
     }
 
     // Note: In real app, you'd fetch related jobs from Supabase too
-    const relatedJobs: any[] = [];
+    const relatedJobs: Job[] = [];
 
     return (
         <div className="pt-32 pb-20 px-4 max-w-7xl mx-auto">

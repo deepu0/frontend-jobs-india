@@ -6,9 +6,10 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/Badge';
 import { JobCard } from '@/components/jobs/JobCard';
+import { Job, JobType, Seniority } from '@/types/job';
 import {
-    Building2, MapPin, DollarSign, Briefcase,
-    Type, FileText, Image as ImageIcon, Send, Sparkles, AlertCircle, Loader2
+    Building2, MapPin, DollarSign,
+    Type, FileText, Send, Sparkles, AlertCircle, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -74,14 +75,15 @@ export default function PostJobPage() {
             if (jobError) throw jobError;
 
             router.push('/');
-        } catch (err: any) {
-            alert(err.message);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to post job';
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    const previewJob = {
+    const previewJob: Job = {
         id: 'preview',
         title: formData.title,
         companyId: 'acme',
@@ -95,10 +97,10 @@ export default function PostJobPage() {
             socials: {}
         },
         location: formData.location,
-        locationType: 'Remote' as any,
+        locationType: 'Remote',
         salaryRange: formData.salaryRange,
-        type: formData.type,
-        seniority: formData.seniority,
+        type: formData.type as JobType,
+        seniority: formData.seniority as Seniority,
         postedAt: 'Just now',
         tags: formData.tags.split(',').map(t => t.trim()),
         description: formData.description,
@@ -211,7 +213,7 @@ export default function PostJobPage() {
                         </div>
 
                         <div className="scale-105 origin-top">
-                            <JobCard job={previewJob as any} />
+                            <JobCard job={previewJob} />
                         </div>
                     </div>
                 </div>

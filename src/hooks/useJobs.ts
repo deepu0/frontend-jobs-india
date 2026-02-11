@@ -1,35 +1,47 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Job } from '@/types/job';
 import { FilterState } from '@/components/jobs/FilterBar';
 
-export function useJobs(filters?: FilterState) {
+interface UseJobsReturn {
+    jobs: Job[];
+    allJobs: Job[];
+    loading: boolean;
+    error: string | null;
+    refetch: () => void;
+}
+
+export function useJobs(filters?: FilterState): UseJobsReturn {
     const [allJobs, setAllJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        async function fetchJobs() {
-            try {
-                const { data, error } = await supabase
-                    .from('jobs')
-                    .select('*, company:companies(*)')
-                    .order('is_featured', { ascending: false })
-                    .order('created_at', { ascending: false });
+    const fetchJobs = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error: supabaseError } = await supabase
+                .from('jobs')
+                .select('*, company:companies(*)')
+                .order('is_featured', { ascending: false })
+                .order('created_at', { ascending: false });
 
-                if (error) throw error;
-                setAllJobs(data as unknown as Job[]);
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
+            if (supabaseError) throw supabaseError;
+            setAllJobs((data as unknown as Job[]) || []);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch jobs';
+            setError(errorMessage);
+            console.error('Error fetching jobs:', err);
+        } finally {
+            setLoading(false);
         }
-
-        fetchJobs();
     }, []);
+
+    useEffect(() => {
+        fetchJobs();
+    }, [fetchJobs]);
 
     // Apply filters client-side
     const jobs = useMemo(() => {
@@ -87,37 +99,51 @@ export function useJobs(filters?: FilterState) {
         });
     }, [allJobs, filters]);
 
-    return { jobs, allJobs, loading, error };
+    return { jobs, allJobs, loading, error, refetch: fetchJobs };
 }
 
-export function useJob(id: string) {
+interface UseJobReturn {
+    job: Job | null;
+    loading: boolean;
+    error: string | null;
+    refetch: () => void;
+}
+
+export function useJob(id: string): UseJobReturn {
     const [job, setJob] = useState<Job | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        async function fetchJob() {
-            if (!id) return;
-            try {
-                const { data, error } = await supabase
-                    .from('jobs')
-                    .select('*, company:companies(*)')
-                    .eq('id', id)
-                    .single();
-
-                if (error) throw error;
-                setJob(data as unknown as Job);
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
+    const fetchJob = useCallback(async () => {
+        if (!id) {
+            setLoading(false);
+            return;
         }
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error: supabaseError } = await supabase
+                .from('jobs')
+                .select('*, company:companies(*)')
+                .eq('id', id)
+                .single();
 
-        fetchJob();
+            if (supabaseError) throw supabaseError;
+            setJob(data as unknown as Job);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch job';
+            setError(errorMessage);
+            console.error('Error fetching job:', err);
+        } finally {
+            setLoading(false);
+        }
     }, [id]);
 
-    return { job, loading, error };
+    useEffect(() => {
+        fetchJob();
+    }, [fetchJob]);
+
+    return { job, loading, error, refetch: fetchJob };
 }
 
 // Hook for paginated jobs with filters

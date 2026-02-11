@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { MOCK_JOBS } from '@/data/mock-jobs';
 import { JobCard } from '@/components/jobs/JobCard';
 import { Badge } from '@/components/ui/Badge';
-import { MapPin, Globe, Twitter, Github, Linkedin, Users, Building2 } from 'lucide-react';
+import { Globe, Twitter, Linkedin, Users, Building2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CompanyProfilePage() {
@@ -101,7 +101,7 @@ export default function CompanyProfilePage() {
                     <div className="p-8 rounded-3xl bg-linear-to-br from-brand-primary to-brand-secondary text-white shadow-xl shadow-brand-primary/10">
                         <h3 className="text-xl font-bold mb-4">Want to work at {company.name}?</h3>
                         <p className="text-white/80 mb-8 leading-relaxed">
-                            We're always looking for talented engineers and designers to join our growing team.
+                            We&apos;re always looking for talented engineers and designers to join our growing team.
                         </p>
                         <button className="w-full py-4 bg-white text-brand-primary rounded-2xl font-extrabold hover:shadow-xl transition-all active:scale-95">
                             Contact Hiring Team

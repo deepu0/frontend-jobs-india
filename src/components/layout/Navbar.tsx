@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, MapPin, DollarSign, Briefcase, Menu, X, User as UserIcon, LogOut } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';

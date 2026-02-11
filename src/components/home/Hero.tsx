@@ -1,7 +1,6 @@
 'use client';
 
-import { Search, MapPin, TrendingUp, Sparkles } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
+import { Search, MapPin, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function Hero() {

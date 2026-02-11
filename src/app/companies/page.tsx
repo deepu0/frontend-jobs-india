@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Company } from '@/types/job';
-import { Building2, Loader2, Search, ExternalLink, MapPin } from 'lucide-react';
+import { Building2, Loader2, Search, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface CompanyWithJobCount extends Company {
     jobCount: number;
@@ -53,8 +52,9 @@ export default function CompaniesPage() {
             }));
 
             setCompanies(companiesWithCounts);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to load companies';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

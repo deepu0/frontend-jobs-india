@@ -4,24 +4,23 @@ import { useState, Suspense } from 'react';
 import { JobCard } from '@/components/jobs/JobCard';
 import { FilterBar, FilterState } from '@/components/jobs/FilterBar';
 import { usePaginatedJobs } from '@/hooks/useJobs';
-import { Loader2, Briefcase, SearchX } from 'lucide-react';
+import { Loader2, SearchX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 
 const JOBS_PER_PAGE = 10;
 
-function JobsContent() {
-    const searchParams = useSearchParams();
-    const [currentPage, setCurrentPage] = useState(1);
+// Create a filter key from filter state to force reset when filters change
+function getFilterKey(filters: FilterState): string {
+    return `${filters.search}-${filters.location.join(',')}-${filters.salary.join(',')}-${filters.type.join(',')}-${filters.seniority.join(',')}`;
+}
 
-    // Get filters from URL params
-    const filters: FilterState = {
-        search: searchParams.get('search') || '',
-        location: searchParams.getAll('location'),
-        salary: searchParams.getAll('salary'),
-        type: searchParams.getAll('type'),
-        seniority: searchParams.getAll('seniority'),
-    };
+function JobsContentInner({ 
+    filters
+}: { 
+    filters: FilterState;
+}) {
+    const [currentPage, setCurrentPage] = useState(1);
 
     const { 
         jobs, 
@@ -32,11 +31,6 @@ function JobsContent() {
         totalJobs, 
         totalPages 
     } = usePaginatedJobs(filters, currentPage, JOBS_PER_PAGE);
-
-    // Reset to page 1 when filters change
-    useState(() => {
-        setCurrentPage(1);
-    });
 
     const hasActiveFilters = 
         filters.search ||
@@ -190,5 +184,26 @@ export default function JobsPage() {
         }>
             <JobsContent />
         </Suspense>
+    );
+}
+
+function JobsContent() {
+    const searchParams = useSearchParams();
+
+    // Get filters from URL params
+    const filters: FilterState = {
+        search: searchParams.get('search') || '',
+        location: searchParams.getAll('location'),
+        salary: searchParams.getAll('salary'),
+        type: searchParams.getAll('type'),
+        seniority: searchParams.getAll('seniority'),
+    };
+
+    // Use key to force reset when filters change
+    return (
+        <JobsContentInner 
+            key={getFilterKey(filters)}
+            filters={filters} 
+        />
     );
 }
