@@ -1,56 +1,49 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Job } from '@/types/job';
+import { useState, Suspense } from 'react';
 import { JobCard } from '@/components/jobs/JobCard';
-import { FilterBar } from '@/components/jobs/FilterBar';
-import { Loader2, Briefcase } from 'lucide-react';
+import { FilterBar, FilterState } from '@/components/jobs/FilterBar';
+import { usePaginatedJobs } from '@/hooks/useJobs';
+import { Loader2, Briefcase, SearchX } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 
 const JOBS_PER_PAGE = 10;
 
-export default function JobsPage() {
-    const [jobs, setJobs] = useState<Job[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+function JobsContent() {
+    const searchParams = useSearchParams();
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalJobs, setTotalJobs] = useState(0);
 
-    useEffect(() => {
-        fetchJobs();
-    }, [currentPage]);
+    // Get filters from URL params
+    const filters: FilterState = {
+        search: searchParams.get('search') || '',
+        location: searchParams.getAll('location'),
+        salary: searchParams.getAll('salary'),
+        type: searchParams.getAll('type'),
+        seniority: searchParams.getAll('seniority'),
+    };
 
-    async function fetchJobs() {
-        setLoading(true);
-        try {
-            // Get total count
-            const { count } = await supabase
-                .from('jobs')
-                .select('*', { count: 'exact', head: true });
-            
-            setTotalJobs(count || 0);
+    const { 
+        jobs, 
+        featuredJobs, 
+        regularJobs, 
+        loading, 
+        error, 
+        totalJobs, 
+        totalPages 
+    } = usePaginatedJobs(filters, currentPage, JOBS_PER_PAGE);
 
-            // Get paginated jobs
-            const { data, error } = await supabase
-                .from('jobs')
-                .select('*, company:companies(*)')
-                .order('is_featured', { ascending: false })
-                .order('created_at', { ascending: false })
-                .range((currentPage - 1) * JOBS_PER_PAGE, currentPage * JOBS_PER_PAGE - 1);
+    // Reset to page 1 when filters change
+    useState(() => {
+        setCurrentPage(1);
+    });
 
-            if (error) throw error;
-            setJobs(data as unknown as Job[]);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    const totalPages = Math.ceil(totalJobs / JOBS_PER_PAGE);
-    const featuredJobs = jobs.filter(job => job.isFeatured);
-    const regularJobs = jobs.filter(job => !job.isFeatured);
+    const hasActiveFilters = 
+        filters.search ||
+        filters.location.length > 0 ||
+        filters.salary.length > 0 ||
+        filters.type.length > 0 ||
+        filters.seniority.length > 0;
 
     return (
         <div className="pt-24 pb-20 min-h-screen">
@@ -66,7 +59,7 @@ export default function JobsPage() {
                             All Frontend Jobs
                         </h1>
                         <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-                            Discover {totalJobs}+ opportunities at top companies hiring frontend developers in India
+                            Discover {loading ? '...' : totalJobs}+ opportunities at top companies hiring frontend developers in India
                         </p>
                     </motion.div>
                 </div>
@@ -90,15 +83,20 @@ export default function JobsPage() {
                     </div>
                 ) : jobs.length === 0 ? (
                     <div className="text-center py-20">
-                        <Briefcase className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <SearchX className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                         <h3 className="text-xl font-bold mb-2">No jobs found</h3>
-                        <p className="text-muted-foreground">Be the first to post a job!</p>
+                        <p className="text-muted-foreground mb-4">
+                            {hasActiveFilters 
+                                ? "Try adjusting your filters to see more results" 
+                                : "Be the first to post a job!"}
+                        </p>
                     </div>
                 ) : (
                     <>
                         {/* Results count */}
                         <div className="mb-6 text-sm text-muted-foreground">
                             Showing {jobs.length} of {totalJobs} jobs
+                            {hasActiveFilters && <span className="ml-2 text-brand-primary">(filtered)</span>}
                         </div>
 
                         {/* Featured Jobs */}
@@ -140,19 +138,31 @@ export default function JobsPage() {
                                 </button>
                                 
                                 <div className="flex gap-1">
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                                        <button
-                                            key={page}
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`w-10 h-10 rounded-xl font-bold transition-all ${
-                                                currentPage === page
-                                                    ? 'bg-brand-primary text-white'
-                                                    : 'border border-border hover:bg-muted'
-                                            }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    ))}
+                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                        // Show pages around current page
+                                        let pageNum = i + 1;
+                                        if (totalPages > 5) {
+                                            if (currentPage > 3) {
+                                                pageNum = currentPage - 3 + i;
+                                            }
+                                            if (pageNum > totalPages) {
+                                                pageNum = totalPages - (4 - i);
+                                            }
+                                        }
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`w-10 h-10 rounded-xl font-bold transition-all ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-brand-primary text-white'
+                                                        : 'border border-border hover:bg-muted'
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 <button
@@ -168,5 +178,17 @@ export default function JobsPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function JobsPage() {
+    return (
+        <Suspense fallback={
+            <div className="pt-24 pb-20 min-h-screen flex items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
+            </div>
+        }>
+            <JobsContent />
+        </Suspense>
     );
 }

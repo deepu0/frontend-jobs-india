@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Hero } from '@/components/home/Hero';
 import { JobCard } from '@/components/jobs/JobCard';
 import { FilterBar } from '@/components/jobs/FilterBar';
@@ -8,6 +8,14 @@ import { PremiumUpsell } from '@/components/home/PremiumUpsell';
 import { useJobs } from '@/hooks/useJobs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Loader2 } from 'lucide-react';
+
+function FilterBarWrapper() {
+  return (
+    <Suspense fallback={<div className="h-20 bg-white/50 rounded-2xl animate-pulse" />}>
+      <FilterBar />
+    </Suspense>
+  );
+}
 
 export default function Home() {
   const [showBanner, setShowBanner] = useState(true);
@@ -41,7 +49,7 @@ export default function Home() {
       <Hero />
 
       <section className="max-w-7xl mx-auto px-4 w-full pb-20">
-        <FilterBar />
+        <FilterBarWrapper />
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4 text-muted-foreground font-medium">
