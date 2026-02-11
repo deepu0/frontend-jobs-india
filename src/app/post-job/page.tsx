@@ -10,6 +10,7 @@ import {
     Building2, MapPin, DollarSign, Briefcase,
     Type, FileText, Image as ImageIcon, Send, Sparkles, AlertCircle, Loader2
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PostJobPage() {
     const { user } = useAuth();
