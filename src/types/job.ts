@@ -14,6 +14,8 @@ export interface Company {
         linkedin?: string;
         github?: string;
     };
+    created_at?: string;
+    user_id?: string;
 }
 
 export interface Job {

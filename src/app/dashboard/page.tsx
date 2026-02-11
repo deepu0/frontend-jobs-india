@@ -103,7 +103,7 @@ export default function DashboardPage() {
         { label: 'Active Jobs', value: jobs.length, icon: Briefcase },
         { label: 'Total Views', value: '0', icon: Eye },
         { label: 'Applications', value: '0', icon: TrendingUp },
-        { label: 'Days Active', value: company ? Math.ceil((Date.now() - new Date(company.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0, icon: Calendar },
+        { label: 'Days Active', value: company?.created_at ? Math.ceil((Date.now() - new Date(company.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0, icon: Calendar },
     ];
 
     return (
