@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { fetchAllJobs, fetchJobsByUserId, deleteJob as deleteJobService } from '@/lib/services/jobs';
+import { fetchCompanyByUserId, fetchFirstCompany } from '@/lib/services/companies';
 import { useRouter } from 'next/navigation';
 import { Job, Company } from '@/types/job';
 import { 
@@ -39,23 +40,17 @@ export default function DashboardPage() {
         setLoading(true);
         try {
             // For admin: fetch ALL jobs, for regular user: fetch only their jobs
-            const jobsQuery = isAdmin
-                ? supabase.from('jobs').select('*, company:companies(*)').order('created_at', { ascending: false })
-                : supabase.from('jobs').select('*, company:companies(*)').eq('user_id', user?.id).order('created_at', { ascending: false });
+            const jobsData = isAdmin
+                ? await fetchAllJobs()
+                : await fetchJobsByUserId(user?.id || '');
 
-            const { data: jobsData, error: jobsError } = await jobsQuery;
-
-            if (jobsError) throw jobsError;
             setJobs(jobsData as unknown as JobWithCompany[]);
 
             // Fetch user's company (or first company for admin)
-            const companyQuery = isAdmin
-                ? supabase.from('companies').select('*').limit(1).maybeSingle()
-                : supabase.from('companies').select('*').eq('user_id', user?.id).maybeSingle();
+            const companyData = isAdmin
+                ? await fetchFirstCompany()
+                : await fetchCompanyByUserId(user?.id || '');
 
-            const { data: companyData, error: companyError } = await companyQuery;
-
-            if (companyError && companyError.code !== 'PGRST116') throw companyError;
             setCompany(companyData);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -71,13 +66,7 @@ export default function DashboardPage() {
         setDeleteLoading(jobId);
         try {
             // Admin can delete any job, regular user can only delete their own
-            const deleteQuery = isAdmin
-                ? supabase.from('jobs').delete().eq('id', jobId)
-                : supabase.from('jobs').delete().eq('id', jobId).eq('user_id', user?.id);
-
-            const { error } = await deleteQuery;
-
-            if (error) throw error;
+            await deleteJobService(jobId, isAdmin ? undefined : user?.id);
 
             setJobs(jobs.filter(job => job.id !== jobId));
         } catch (err) {
