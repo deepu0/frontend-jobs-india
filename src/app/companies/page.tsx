@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fetchAllCompanies, fetchJobCompanyIds } from '@/lib/services';
 import { Company } from '@/types/job';
 import { Building2, Loader2, Search, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -24,24 +24,14 @@ export default function CompaniesPage() {
     async function fetchCompanies() {
         setLoading(true);
         try {
-            // Get companies with job count
-            const { data: companiesData, error: companiesError } = await supabase
-                .from('companies')
-                .select('*')
-                .order('name');
-
-            if (companiesError) throw companiesError;
-
-            // Get job counts for each company
-            const { data: jobsData, error: jobsError } = await supabase
-                .from('jobs')
-                .select('company_id');
-
-            if (jobsError) throw jobsError;
+            const [companiesData, jobsData] = await Promise.all([
+                fetchAllCompanies(),
+                fetchJobCompanyIds(),
+            ]);
 
             // Count jobs per company
             const jobCounts: Record<string, number> = {};
-            jobsData?.forEach(job => {
+            jobsData.forEach(job => {
                 jobCounts[job.company_id] = (jobCounts[job.company_id] || 0) + 1;
             });
 

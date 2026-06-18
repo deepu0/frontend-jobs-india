@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fetchAllJobs, fetchJobById as fetchJobByIdService } from '@/lib/services/jobs';
 import { Job } from '@/types/job';
 import { FilterState } from '@/components/jobs/FilterBar';
 
@@ -22,14 +22,8 @@ export function useJobs(filters?: FilterState): UseJobsReturn {
         setLoading(true);
         setError(null);
         try {
-            const { data, error: supabaseError } = await supabase
-                .from('jobs')
-                .select('*, company:companies(*)')
-                .order('is_featured', { ascending: false })
-                .order('created_at', { ascending: false });
-
-            if (supabaseError) throw supabaseError;
-            setAllJobs((data as unknown as Job[]) || []);
+            const data = await fetchAllJobs();
+            setAllJobs(data);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to fetch jobs';
             setError(errorMessage);
@@ -122,14 +116,8 @@ export function useJob(id: string): UseJobReturn {
         setLoading(true);
         setError(null);
         try {
-            const { data, error: supabaseError } = await supabase
-                .from('jobs')
-                .select('*, company:companies(*)')
-                .eq('id', id)
-                .single();
-
-            if (supabaseError) throw supabaseError;
-            setJob(data as unknown as Job);
+            const data = await fetchJobByIdService(id);
+            setJob(data);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to fetch job';
             setError(errorMessage);
