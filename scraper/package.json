@@ -1,0 +1,35 @@
+{
+  "name": "frontend-jobs-scraper",
+  "version": "1.0.0",
+  "description": "Production-ready job scraper for frontend jobs in India",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "scrape": "ts-node src/index.ts",
+    "scrape:lever": "ts-node src/index.ts --source=lever",
+    "scrape:greenhouse": "ts-node src/index.ts --source=greenhouse",
+    "scrape:ashby": "ts-node src/index.ts --source=ashby",
+    "scrape:wellfound": "ts-node src/index.ts --source=wellfound",
+    "scrape:naukri": "ts-node src/index.ts --source=naukri",
+    "scrape:linkedin": "ts-node src/index.ts --source=linkedin",
+    "scrape:indeed": "ts-node src/index.ts --source=indeed"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "https-proxy-agent": "^7.0.6",
+    "p-queue": "^6.6.2",
+    "robots-parser": "^3.0.1",
+    "socks-proxy-agent": "^8.0.5",
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/uuid": "^10.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
